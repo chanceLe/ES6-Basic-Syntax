@@ -22,13 +22,13 @@
 			 * 上面的代码的计数器i，只在for循环体内有效。
 			 * 下面的代码，如果用var，最后输出10：
 			 */
-			var a = [];
+			var k = [];
 			for(var i=0;i<10;i++){
-				a[i] = function(){
+				k[i] = function(){
 					console.log(i);
 				}
 			}
-			a[6]();  //10  到九循环完，又加了1，换成let会得到期望结果。
+			k[6]();  //10  到九循环完，又加了1，换成let会得到期望结果。
 			/*
 			 * var声明的变量全局范围内都有效。所以每次循环，新的i值都会覆盖旧值
 			 * let声明的仅在块级作用域内有效，最后输出6
@@ -42,10 +42,10 @@
 			var tmp = 123;
 			if(true){
 				tmp = "abc";
-				console.log(tmp);
+				console.log(tmp,"11");  //"abc"
 				let tmp;	
 			}
-			console.log(tmp);
+			console.log(tmp,"22");  //"123"
 			/*
 			 * 书上说，如果区块中存在let和const命令，这个区块对这些命令声明的变量，从一开始就形成了封闭
 			 * 作用域，凡是声明之前使用的，都会报错。
@@ -114,7 +114,7 @@
 		    a.length = 0;
 //		    a = ["Dave"]   //报错，赋值就是更换地址，不行的。
 			//如果真的想把对象冻结，应该使用Object.freeze方法。
-			const foo = Object.freeze({});
+			const foo2 = Object.freeze({});
 			//常规模式下，下面一行不起作用
 			//严格模式下，会报错
 			foo.prop = 123;  //正常情况，报错 了 
