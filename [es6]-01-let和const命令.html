@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>[es6]-01-let和const</title>
+		<script src="./js/browser.js"></script>
+		<script type="text/babel">
+			//let命令声明变量，类似var，但所声明的变量只在let代码块有效。
+			let x = 1;
+			console.log(x);
+			{
+				let a = 1;
+				var b = 2;
+			}
+			console.log(b);
+//			console.log(a);  //报错，找不到。
+			//for循环的计数器，就很适合用let
+			for(let i=0;i<5;i++){
+				console.log(i);
+			}
+			/*
+			 * 上面的代码的计数器i，只在for循环体内有效。
+			 * 下面的代码，如果用var，最后输出10：
+			 */
+			var a = [];
+			for(var i=0;i<10;i++){
+				a[i] = function(){
+					console.log(i);
+				}
+			}
+			a[6]();  //10  到九循环完，又加了1，换成let会得到期望结果。
+			/*
+			 * var声明的变量全局范围内都有效。所以每次循环，新的i值都会覆盖旧值
+			 * let声明的仅在块级作用域内有效，最后输出6
+			 * 
+			 * let不会发生变量提升的现象，所以一定要在定义后使用，否则报错。
+			 * 
+			 * 暂时性死区：只要块级作用域内存在let命令，它所声明的变量就绑定这个区域，
+			 * 不再受外部影响。
+			 */
+			
+			var tmp = 123;
+			if(true){
+				tmp = "abc";
+				console.log(tmp);
+				let tmp;	
+			}
+			console.log(tmp);
+			/*
+			 * 书上说，如果区块中存在let和const命令，这个区块对这些命令声明的变量，从一开始就形成了封闭
+			 * 作用域，凡是声明之前使用的，都会报错。
+			 * 
+			 * 实际情况，let不会报错，const会报错（这可能跟浏览器端转码有关，版本为5）。
+			 * 
+			 * 有些死区比较隐蔽，不太容易发现：
+			 */
+			function bar(x=y,y=2){
+				return [x,y];
+			}
+			console.log(bar());   //书上说这里由于y没有定义，应该报错，实际是 [undefined,2]
+			
+			
+			function bar2(x=2,y=x){
+				return [x,y];
+			}
+			console.log(bar2());   //[2,2]正常
+			
+			//不允许重复声明，let不允许在相同作用域内，重复声明同一个变量
+			function fun(){
+				let a = 10;
+//				var a = 5;   //报错。
+ 		//		let a = 1;   //报错
+			}  
+			//不能在函数内部重新声明参数
+			function fun1(arg){
+//				let arg;   //报错
+
+				{
+					let arg;  //不报错
+				}
+			}
+			
+			/*
+			 * const命令
+			 * 声明一个只读的常量。一旦声明，常量的值就不能改变。
+			 * 同时也说明，一旦声明，就要立即初始化，否则也报错，
+			 */
+			const PI = 3.1415;
+			console.log(PI);
+//			PI = 3;  //报错 只读的
+//          const circle;   //一旦声明，必须立即初始化。
+   			/*
+   			 * const的作用域与let命令相同：只在声明所在的块级作用域有效。
+   			 */
+   			if(true){
+   				const m = 5;
+   			}
+// 			console.log(m); //未定义
+			/*
+			 * 与let相似：
+			 *  const命令声明的常量也不提升，同样存在暂时性死区，只能在声明的位置后使用。
+			 *  也不可以重复声明。
+			 * 
+			 * 对于复合类型的变量，变量名不指向数据，而是指向数据所在的地址。const命令只
+			 * 是保证变量名指向的地址不变，并不保证该地址的数据不变，所以讲一个对象声明为常量，
+			 * 必须非常小心。
+			 */
+			const foo = {};
+		    foo.prop = 123;
+		    console.log(foo.prop);
+		    //上面的常量foo存储的是对象的地址，这个地址不可变，但依然可以添加属性。
+		    const a = [];
+		    a.push("hello");
+		    a.length = 0;
+//		    a = ["Dave"]   //报错，赋值就是更换地址，不行的。
+			//如果真的想把对象冻结，应该使用Object.freeze方法。
+			const foo = Object.freeze({});
+			//常规模式下，下面一行不起作用
+			//严格模式下，会报错
+			foo.prop = 123;  //正常情况，报错 了 
+			
+			//ES5只有两种声明变量的方法：var和function。
+			//ES6有6种：var function let const class import
+			
+			/*
+			 * 全局对象属性：
+			 * 全局对象是最顶层的对象，在浏览器环境下指的是window对象，在node指的是
+			 * global对象。ES5中，全局对象的属性和全局变量是等价的。
+			 * 未声明的全局变量，自动成为全局对象window的属性，这被认为是js的最大败笔。
+			 * ES6为了改变这一点，一方面规定，为了保持兼容性，var命令和function命令声明的全局变量，
+			 * 依旧是全局对象的属性，另一方面规定，let，const，class命令声明的全局变量不属于全局对象的
+			 * 属性。也就是说，从ES6开始，全局变量将逐渐与全局对象的属性脱钩。
+			 */
+		</script>
+	</head>
+	<body>
+	</body>
+</html>

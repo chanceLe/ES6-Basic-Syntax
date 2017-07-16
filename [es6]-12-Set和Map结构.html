@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>[es6]-12-Set和Map结构</title>
+		<script src="./js/browser.js"></script>
+		<script type="text/babel">
+			/*
+			 * Set 
+			 * Es6提供了新的数据结构Set，类似数组，成员都是唯一的，不重复。
+			 * 本身是一个构造函数，用来生成Set数据结构。
+			 */
+			
+			var s = new Set();
+			[2,3,5,4,5,2,2].map(x=>s.add(x));
+			console.log(s);  //2,3,5,4   不会重复添加
+			
+			//Set函数可以接收一个数组（或类似数组的对象）作为参数，用来初始化。
+			var set = new Set([1,2,3,4]);
+			console.log([...set]);  //[1,2,3,4]
+			
+			var set2 = new Set([1,2,3,4,5,5,5,5,5,5]);
+			console.log(set2.size);  //5  没有重复值
+			
+			var set3 = new Set([...document.querySelectorAll("div")]);
+			console.log(set3.size);   //3
+			
+			//上面代码中也展示了一种数组去重方法    [...new Set(array)]
+			console.log([...new Set([1,2,3,2,3,2,3])]);   //[1,2,3]
+			
+			/*
+			 * 向Set加入值的时候，不会发生类型转换，所以5 和“5” 是不一样的。
+			 * Set内部的比较算法是 same-value-equality。类似“===”主要的区别是NaN等于自身，三等号认为NaN不等于NaN。
+			 * 在set内部，NaN等于NaN.但两个对象总是不相等。
+			 */
+			let set4 = new Set();
+			set4.add({});  
+			console.log(set4.size);   //1
+			set4.add({});
+			console.log(set4.size);   //2  表示两个对象在Set内是不相等的。
+			set4.add(NaN);
+			console.log(set4.size);    //3
+			set4.add(NaN);
+			console.log(set4.size);   //3   都是3表明NaN在Set内部是相等的。
+			
+			/*
+			 * Set实例的属性和方法
+			 * 属性:   Set.prototype.constructor:  构造函数，默认就是Set。
+			 * 		   Set.prototype.size  :  返回Set成员数。
+			 * 
+			 * 方法:分为两类，操作方法和遍历方法
+			 *      四个操作：
+			 *       add(value)  添加某个值，返回Set结构本身。
+			 * 		 delete(value) 删除某个值，返回布尔值，表示删除是否成功。
+			 * 		 has(value) 返回一个布尔值，表示该值是否为Set的成员。
+			 * 		 clear() 清除所有成员，没有返回值。
+			 */
+			
+			//Array.from()可以把Set结构转为数组，所以又有了一种去重的方法
+			function dedupe(arr){
+				return Array.from(new Set(arr));
+			}
+			console.log(dedupe([1,2,3,3,3,]));  //[1,2,3]
+			
+			/*
+			 * Set结构的实例有四个遍历方法，可用于遍历成员。
+			 *   keys()  返回键名的遍历器
+			 *   values() 返回键值的遍历器
+			 *   entries() 返回键值对的遍历器
+			 *   forEach()  使用回调函数遍历每个成员
+			 * 
+			 * 需要特别指出的是 Set的遍历顺序就是插入顺序。
+			 * Set结构中，键名跟键值是同一个，所以keys 跟values的结果一样。
+			 */
+			let set5 = new Set(["green","blue","red"]);
+			for(let key of set5.keys()){
+				console.log(key,"key")
+			}
+			for(let value of set5.values()){
+				console.log(value,"value")
+			}
+			for(let entry of set5.entries()){
+				console.log(entry,"entry")
+			}
+
+			 // Set结构默认可遍历，他的默认遍历器就是values方法
+			console.log(Set.prototype[Symbol.iterator] == Set.prototype.values);  //true
+			//这意味着可以省略values方法 直接用for of 循环
+			
+			for(let value of set5){
+				console.log(value,"value")   //默认是values方法
+			}
+			
+			//forEach   参数是一个处理函数。参数函数的参数依次是键值，键名，Set本身，forEach方法本身
+			//还可以有第二个参数，表示绑定的this对象。
+			
+			//扩展运算符内部使用的是for...of，所以同样可以用于集合。
+			console.log([...set5]);  //["green","blue","red"]
+			
+			//数组的map和filter方法也可以用于Set
+			let set6 = new Set([1,2,3]);
+			set6 = new Set([...set6].map(x=>x*2));
+			console.log(set6);  //{2,4,6}
+			
+			let set7 = new Set([1,2,3,4,5]);
+			set7 = new Set([...set7].filter(x=>(x % 2)==0));
+			console.log(set7);  //{2,4}
+			
+			//使用Set可以很容易实现并集交集差集
+			
+			let a = new Set([1,2,3]);
+			let b = new Set([4,3,2]);
+			
+			//并集
+			let union = new Set([...a,...b]);
+			console.log(union);  //{1,2,3,4}
+			
+			//交集
+			let intersect = new Set([...a].filter(x=>b.has(x)));
+			console.log(intersect)  //{2,3}
+			
+			//差集
+			let diff = new Set([...a].filter(x=>!b.has(x)));
+			console.log(diff);  //{1}
+			/*
+			 * 如果想在操作中改变原来的Set结构，目前没有直接的方法，但有两个变通方法，
+			 * 一种是利用原Set映射出一个新的结构，然后赋值给原来的Set结构；
+			 * 一种是利用Array.from方法
+			 */
+			//方法一
+			let set8 = new Set([1,2,3]);
+			set8 = new Set([...set8].map(x=>x*2));
+			console.log(set8);   //{2,4,6}
+			
+			//方法二
+			let set9 = new Set([1,2,3]);
+			set9 = new Set(Array.from(set,val=>val*2));
+			console.log(set9);   //{2,4,6}
+			
+			/*
+			 * WeakSet
+			 * 结构与Set类似，但只能存放对象，不能存放其他类型的成员。
+			 * WeakSet中的对象都是弱引用，即不在垃圾回收机制的考虑范围内。
+			 * 这意味着无法引用WeakSet的成员，因此WeakSet不可遍历。
+			 * 不能获取size和forEach属性。
+			 * 一个用处是，储存DOM节点，而不担心这些节点从文档中移除时，会引发内存泄漏下面是另一个例子：
+			 */
+			const foos = new WeakSet();
+			class Foo{
+				constructor(){
+					foos.add(this);
+				}
+				method(){
+					if(!foos.has(this)){
+						throw new TypeError("Foo.prototype.method 只能在Foo的实例上调用")
+					}
+				}
+			}
+			//上面代码保证了Foo的实例方法，只能在Foo的实例上调用。这里使用WeakSet的好处是foos对实例的引用，
+			//不会被计入内存回收机制。所以删除实例的时候不用考虑foos，也不会出现内存泄漏。
+			
+			
+			
+			/*
+			 * Map
+			 * Map结构的目的和基本用法
+			 * js的对象本质上是键值对的集合（hash结构），但是传统上只能用字符串当做键。这给使用带来了很大限制。
+			 * Es6提供了Map数据结构，类似对象，也是键值对的结合，但键的范围不限于字符串，各种类型的值都可以当做键。
+			 * 也就是说Object结构提供了“字符串-值”的对应。Map结构提供了“值-值”的对应。是一种更完善的哈希结构实现。
+			 */
+			var m = new Map();
+			var o = {p:"hello world!"}
+			
+			m.set(o,'content');
+			console.log(m.get(o));  //content
+			console.log(m.has(o));   //true
+			console.log(m.delete(o));  //true
+			console.log(m.has(o));  //false
+			/*
+			 * 上面代码使用set方法，将对象o当做m的一个键，然后使用get方法读取这个键，接着用delete方法删除了这个键。
+			 * 作为构造函数，Map也可以接受一个数组作为参数。该数组的成员是一个个表示键值对的数组。
+			 */
+			var m2 = new Map([
+				["name","张丹"],
+				["age",20]
+			])
+			console.log(m2.size);  //2
+			console.log(m2.has("name"));  //true 
+			console.log(m2.get("name"));   //张丹
+			
+			//下面的例子中，字符串true和布尔true是两个不同的键
+			var m3 = new Map([
+				[true,"1"],
+				["true","string"]
+			]);
+			console.log(m3.get("true"));  //string
+			console.log(m3.get(true));   //1
+			
+			//如果对同一个键多次赋值，后面的值将覆盖前面的值
+			m3.set(true,"number");
+			console.log(m3.get(true));  //number
+			
+			// 如果读取一个未知的键，则返回undefined。注意，只有对同一个对象的引用，Map
+			// 才将其视为同一个键，这一点要非常小心。
+			
+			var m4 = new Map();
+			m4.set(["s"],555);
+			console.log(m4.get(["s"]));  //undefined   因为这俩不是同一个对象的引用。
+			
+			//同理，同样的值的两个实例，在Map结构中被视为两个键。
+			 
+			var m5 = new Map();
+			var k1 = ["a"];   
+			var k2 = ["a"];   //k1其实跟k2的内存地址不一样。
+			m5.set(k1,"1111")
+			m5.set(k2,"2222")
+			console.log(m5.size);   //2  表明这是两个键。
+			
+			//由上可知，Map实际上是跟内存地址绑定的，只要内存地址不一样，就视为两个键。这就解决了同名
+			//属性碰撞的问题。我们扩展别人库的时候，如果使用对象作为键名，就不用担心自己的属性与原作者
+			//重名。
+			/*
+			 * 如果Map的键是一个简单类型的值（数字，字符串，布尔值），则只要两个严格相等，Map将其视为一个键。
+			 * 包括+0和-0。另外，虽然NaN不等于自身，但Map将其视为同一个键。
+			 */
+			
+			var m6 = new Map();
+			m6.set(NaN,"123");
+			console.log(m6.get(NaN));  //123
+			m6.set(-0,"456");
+			console.log(m6.get(0));  //456
+			
+			/*
+			 * 实例的属性和操作方法
+			 *   属性：  size  返回大小
+			 *   方法：  set 添加  get 获取，找不到返回undefined    has 判断是否存在，返回布尔
+			 * 			delete删除，返回布尔值  clear清空。
+			 * 
+			 *   遍历方法跟Set一样，keys，values，entries，forEach
+			 *   Mapc的默认遍历器是entries，是键值对。
+			 *    
+			 *   Map转为数结构，比较快速的是用...  扩展运算符。
+			 * 
+			 * Map还有一个forEach方法，与数组的forEach方法类似，也可以实现遍历。
+			 * 这里的forEach接受第二个参数，绑定this。
+			 */
+			var reporter = {
+				report:function(key,value){
+					console.log("key：%s,value :%s",key,value);
+				}
+			}
+			console.log(reporter.report);
+			var m7 = new Map([
+				["name","zhangdan"],
+				["age",25]
+			])
+			m7.forEach(function(value,key,map){
+				this.report(key,value);
+			},reporter)
+			
+			//上面的handler函数不能用箭头函数，原因是箭头函数的this 是死的。
+			
+			/*
+			  Map与其他结构互转
+			 */
+			
+			//1.map转为数组 ,...扩展运算符。
+			var m8 = new Map().set("add","+").set("plus","-");
+			console.log([...m8]);
+			
+			//2.数组转为Map，将数组传入构造函数。
+			var m9 =new Map([["name","张丹"],["age",26]]);
+			
+			//3.如果map的所有键都是字符串，那就可以转成对象。
+			var strMaptoObj = (strMap) =>{
+				let obj = Object.create(null);
+				for(let [k,v] of strMap){
+					obj[k] =v;
+				}
+				return obj;
+			}
+			console.log( typeof(strMaptoObj(m9)));  //object
+			
+			//4.对象转为Map
+			var objToStrMap = (obj)=>{
+				let strMap = new Map();
+				for(let k of Object.keys(obj)){
+					strMap.set(k,obj[k]);
+				}
+				return strMap;
+			}
+			console.log(objToStrMap({yes:true,no:false}));   //Map
+			
+			//5.Map转Json，分为两种情况。
+			//一种是 Map的键名都是字符串，这时可以转为对象JSON。
+			var strMapToJson = (strMap) =>JSON.stringify(strMaptoObj(strMap));
+			let m10 = new Map().set("yes",true).set("no",false);
+			console.log(strMapToJson(m10));  //{"yes":true,"no":false}
+			
+			//另一种是Map的键名含有非字符串，这时可以转为数组JSON。
+			var mapToArrayJson = (map) => JSON.stringify([...map]);
+			let m11 = new Map().set(true,"1").set({foo:3},["abc"]);
+			console.log(mapToArrayJson(m11));   //[[true,"1"],[{"foo":3},["abc"]]]  数组json
+			
+			//6.JOSN转Map
+			//正常情况下，所有键名都是字符串
+			var jsonToStrMap = (jsonStr) => objToStrMap(JSON.parse(jsonStr));
+			console.log(jsonToStrMap('{"yes":true,"no":false}'));  //Map {"yes" => true, "no" => false}
+			
+			//但有一个特殊情况，整个JSON是一个数组，且每个数组成员本身，又是一个有两个成员的数组，这时，可以一一对应的转为Map。
+			//这往往是数组转JSON的逆操作。
+			var jsonToMap = (jsonStr) => new Map(JSON.parse(jsonStr));
+			console.log(jsonToMap('[["name","zhangdan"],["age",25]]'));
+			                    //Map {"name" => "zhangdan", "age" => 25}
+			                    
+			                    
+			/*
+			 * WeakMap  
+			 * 跟WeakSet类似，也是只接受成员为对象（null除外），而且键名所指向的对象，不计入垃圾回收机制。
+			 * WeakMap的键名可能会被自动回收，当对象被回收后，WeakMap自动移除对应的键值对。
+			 * 典型的应用是，一个DOM元素的WeakMap结构，当某个DOM元素被清除，其所对应的WeakMap记录自动被移除。
+			 * 基本上，WeakMap的专用场合就是，它的键所对应的对象，可能会在未来消失。
+			 * WeakMap有助于防止内存泄漏。
+			 * 
+			 * WeakMap的另一个用处就是部署私有属性。
+			 */
+			{
+				let _counter = new WeakMap();
+				let _action = new WeakMap();
+				
+				class Countdown{
+					constructor(counter,action){
+						_counter.set(this,counter);
+						_action.set(this,action);
+					}
+					dec(){
+						let counter = _counter.get(this);
+						if(counter<1){
+							return 
+						}
+					    counter--;
+					    _counter.set(this,counter);
+					    if(counter === 0){
+					    	_action.get(this)();
+					    }
+					}
+				}
+				
+				let c = new Countdown(2, ()=>{console.log("Done")});
+				c.dec();
+				c.dec();
+				
+				//Done
+			}
+		</script>
+	</head>
+	<body>
+		<div></div>
+		<div></div>
+		<div></div>
+	</body>
+</html>

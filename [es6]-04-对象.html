@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>[es6]-04-对象</title>
+		<script src="./js/browser.js"></script>
+		<script type="text/babel">
+			/*
+			 *  对象的结构赋值
+			 *   对象属性没有次序，所以变量名与属性同名才能取到正确值。
+			 */
+			var {bar,foo} = {"bar":1,"fooo":2};
+			console.log({bar,foo}); //同样，找不到的就是undefined
+			
+			//如果变量名与属性名不一致，必须写成下面的形式：
+			var {foo:baz} = {"foo":"aaa"};
+			console.log(baz);  //aaa,类似数组，键就相当于数组的索引。
+			
+			let obj = {"first":"hello","last":"world"};
+			let {first:f,last:l} = obj;
+			console.info(f,l)
+			// 下面的代码中，let命令下面的圆括号是必须的，否则会报错。解析器首先把他
+			//当做代码块，而不是赋值语句：
+			let fooo;
+			({fooo} = {"fooo":1});
+			console.info(fooo);  //1 let声明，下面赋值
+			
+			//对象的解构也可以设置默认值，支持嵌套：
+			var {x=3} = {};
+			console.info(x);  //3
+			var {x,y=5} = {x:1};
+			console.info(x,y)  //1 5
+			var {x:y=3} = {x:5};
+			console.info(y);  //5
+			
+			//默认值生效的条件是 对象的属性值严格等于undefined。
+			var {x=3} = {x:undefined};
+			console.info(x);  //3
+			//对于已经声明的变量解构赋值，要带上圆括号：
+			var x;
+			({x} = {x:1})
+			console.info(x);
+			//对象的解构赋值，可以很方便的将现有对象上的方法，赋值到某个变量：
+			let {log,sin,cos} = Math;
+			console.log(log,sin,cos);  //获取Math对象上的方法并赋值。
+			//由于数组本质上是特殊的对象，所以可以对数组进行对象属性的解构：
+			var arr = [1,2,3];
+			var {0:first,[arr.length-1]:last} = arr;
+			console.info(first,last);   //1 3
+		</script>
+	</head>
+	<body>
+	</body>
+</html>

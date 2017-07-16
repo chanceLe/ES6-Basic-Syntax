@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>[es6]-05-字符串</title>
+		<script src="./js/browser.js"></script>
+		<script type="text/babel">
+			/*
+			 * 字符串解构赋值
+			 * 被转换成了一个类似数组的对象
+			 */
+			const [a,b,c,d,e] = "hello";
+			console.info(a,b,c,d,e)
+			
+			// 类似数组的对象都有一个length属性，因此可以对这个length解构：
+			let {length:len} = "hello！";
+			console.info(len);   //6  （获取字符串长度）
+			
+			/*
+			 * 数值和布尔值的解构赋值：
+			 * 解构时，如果等号右边是数值和布尔值，则会先转为对象。
+			 */
+			let {toString:s} = 123;
+			console.info(s);  //获取到的是123转为对象后的toString属性。
+			let {toString:bool} = true;
+			console.info(bool);   //同上，因为转换成对象了，所以取的是属性不是值。
+			let {valueOf:v}=false;
+			console.log(v);  //也是返回一个函数
+//			let {[[PrimitiveValue]]:k} = 123;   //原始值并没有取到。
+//			console.info(k);
+			
+			var m = new Number(5);
+			console.log(m)
+			
+			
+			//函数参数的解构赋值
+			function add([x,y]){
+				return x+y;
+			}
+			console.info(add([1,2]));  //3
+			//函数参数的解构也可以使用默认值:
+			function move({x=0,y=0} = {}){
+				return [x,y]
+			}
+			console.log(move({x:1,y:2}));  //[1,2]
+			console.log(move({x:1}));  //[1,0]
+			console.log(move({}));   //[0,0]
+			console.log(move());   //[0,0]
+			
+			//上面代码中，函数move的参数是一个对象，通过对这个对象进行解构，得到变量x和y的值。
+			//如果解构失败就等于默认值。下面的就不一样：
+			function move({x,y} = {x:0,y:0}){
+				return [x,y];
+			}
+			console.log(move({x:3,y:8}));  //[3,8]
+			console.log(move({x:3}));   //[3,undefined]
+			console.log(move({}));   //[undefined,undefined]
+			console.log(move()); // [0,0];
+			/*
+			 *  上面的代码是为函数move的参数指定默认值，而不是为变量x和y指定默认值，所以结果与之前不同。
+			 * undefined就会触发函数参数的默认值
+			 */
+			console.log([1,undefined,3].map((x="yes") => x));//[1,yes,3]
+			//上边的代码中map接收的是一个函数，这个函数的参数为x，默认值为yes,
+			// 当接收到undefined真值得时候，会触发默认值。
+			
+			
+			/*
+			 * 圆括号的使用：解构赋值很方便，但不容易解析。对于编译器来说，一个式子到底是模式还是表达式，
+			 * 必须解析到（或解析不到）等号才知道。
+			 * ES6的规则是，只要有可能导致解构的歧义，就不能使用圆括号。
+			 * 但是，这个规则实际上不太容易辨别，处理起来麻烦。因此建议，只要有可能，就不放圆括号。
+			 * 以下三种情况不能使用 圆括号:
+			 * 1.变量声明语句中，不能带有圆括号。
+			 * 2.函数参数中，模式不能带圆括号。
+			 * 3.赋值语句中不能将整个模式或嵌套模式中的一层，放在圆括号中。
+			 * 
+			 *可以使用圆括号的情况：赋值语句的非模式部分，可以使用。（只有这一种情况）
+			 * 
+			 * 用途：
+			 * 1.交换变量的值。
+			 * 2.从函数返回多个值。（通过数组或对象返回的多个值，很方便的取出）
+			 * 3.函数参数的定义。（方便将一组参数与变量名对应起来）
+			 * 4.提取json数据。（尤其有用）
+			 * 5.函数参数的默认值。（避免在函数内部写 var foo = config.foo ||"default foo"）
+			 * 6.遍历map结构。
+			 *    任何部署了Iterator接口的对象，都可以用for of循环遍历。map结构原生支持Iterator接口。
+			 * 	  配合变量的解构赋值获取键名和键值就非常方便。
+			 * 7.输入模块的指定方法。
+			 *   加载模块时，往往指定输入哪些方法。解构赋值使得输入语句非常清晰。
+			 */
+			var map = new Map();
+			map.set("first","hello");
+			map.set("second","world");
+			for(let [,value] of map){
+				console.log(value);
+			}
+			/*
+			 * 字符串扩展：
+			 * ES6加强了对Unicode的支持，并且扩展了字符串对象。
+			 * 
+			 * ES5js允许采用"\uxxxx"形式表示一个字符，其中xxxx表示字符的码点。但是这种表示法只限于\u0000到 \uFFFF之间的字符。超出这个
+			 * 范围的字符，必须用两个双字节表达形式。
+			 */
+			console.log("\uD842\uDFB7"); //像吉字的一个字
+			console.log("\u20BB7");    //口7
+			//上面代码表示，如果直接在\u后面跟上大于0xFFFF的数值，js会理解成两部分相加。
+			//ES6做了改进只要将码点放入大括号，就能正确解读该字符。
+			console.log("\u{20BB7}");  //像吉字的一个字
+			/*
+			 * 有了上面的表示法后，js共有6种方法可以表示一个字符：
+			
+			console.log("\z" === "z");
+			console.log('\172' === "z");
+			console.log("\x7A" === "z");
+			console.log("\u007A" === "z");
+			console.log("\u{7A}" === "z");
+			  这里报错，八进制在严格模式下。
+			 */
+			/*
+			 * es6提供了codePointAt方法来处理四个字节存储的字符，返回一个字符的码点。
+			 */
+			var l = '吉a';
+			console.log(l.codePointAt(0).toString(16));
+			console.log(l.codePointAt(1).toString(16)); //浏览器端返回的是97，加上toString方法后都是61
+			
+			/*
+			 * es5提供了String.fromCharCode方法，从码点返回字符，不能识别32位utf-16字符。
+			 * es6提供了String.fromCodePoint()方法，可以识别0xFFFF的字符，弥补了es5的不足
+			 */
+			console.log(String.fromCodePoint(0x20BB7));
+			console.log(String.fromCodePoint(0x78,0x1f680,0x79)==="x\uD83D\uDE80y")
+			//上面的fromCodePoint方法有多个参数，他们会被合并成一个字符返回。
+			//注意，fromCodePoint定义在String对象上，而codePointAt定义在字符串的实例对象上。
+			/*
+			 * 字符串的遍历器接口的实现，使得字符串可以被for of循环
+			 */
+			for(let codePoint of "foo"){
+				console.log(codePoint);
+			}
+			//这个遍历器，最大的优点是可以识别大于0xFFFF的码点，传统的for循环无法识别这样的码点。
+			var text = String.fromCodePoint(0x20BB7);
+			for(let i=0;i<text.length;i++){
+				console.log(text[i])
+			}
+			// " "
+			// " "
+			for(let i of text){
+				console.log(i);
+			}
+			//"吉"
+			//上面代码中，字符串text只有一个字符，但是for循环认为包含两个字符，都不可打印，而for of会正确识别这个字符。
+			
+			/*
+			 * es5对字符串对象提供charAt方法，返回字符串给定位置的字符。不能识别大于0xFFFF的字符
+			 */
+			console.log("abc".charAt(0));
+			console.log(text.charAt(0));  //charAt返回的是utf-16的第一个字节，实际上是无法显示的
+			/*有一个提案，字符串实例的at方法，可识别大于0xFFFF的字符，返回正确的字符串
+			console.log("abc".at(0));
+			console.log(text.at(0));
+			这个方法可以用垫片库实现。目前不能直接用。
+			*/
+			
+			/*
+			 * mormalize()语调符号和重音符号，不详细做，用的时候查书。
+			 */
+			
+			/*
+			 * 传统上，js只有indexOf方法，可以用来确定一个字符串是否包含在另一个字符串中。
+			 * es6新提供了三种方法（都返回布尔值）：
+			 *    includes(),是否找到了参数字符串
+			 *     startsWith()，参数字符串是否在源字符串的头部。
+			 *     endsWidth(),参数字符串是否在源字符串的尾部
+			 */
+			var h = "hello！";
+			console.log(h.includes("ll"));
+			console.log(h.startsWith("h"));
+			console.log(h.endsWith("！"));
+			//这三个方法都支持第二个参数，表示开始搜索的位置
+			var t = "hello world!"
+			console.log(t.includes("l",4));
+			console.log(h.startsWith("world",6));
+			console.log(h.endsWith("llo",5));
+			//使用第二个参数时，endsWith的行为不太一样，其他两个都是针对第n个字符到后边的所有字符，endsWidth()是针对前n个字符。
+			
+			/*
+			 * repeat方法返回一个新字符串，表示将原字符串重复n次：
+			 */
+		    console.log("x".repeat(5));
+		    //参数NaN等同于0
+		    console.log("x".repeat(NaN));
+		    //参数是字符串，会先转换成数字
+		    console.log("x".repeat("na"));
+		    console.log("x".repeat("2"));
+		    
+		    /*
+		     * es7推出了字符串补全长度的功能
+		     * 字符串不够长，会在头部或尾部补全
+		    console.log("x".padStart(5,"ab"));
+		    console.log("xxx".padEnd(7,"abc"));
+		    如果省略第二个参数，则用空格补全。
+		    用途： 为数值补全指定位数。
+		      另一个用途是提示字符串格式。
+		     */
+		    /*
+		     * 模板字符串，与python中的类似，反引号标识。
+		     * 可以嵌入变量，${变量名}
+		     * 表示多行字符串的时候，所有的空格和缩进都会被保留在输出之中。如果不想要换行，可以用trim()方法	消除。
+		     */
+		    var name = "chance",time = "today";
+		    console.log(`hello ${name},how are you ${time}?`);
+		    //表示变量的大括号内可以放入任意js表达式，可以进行运算或引用对象属性，还能调用函数。
+		    //如果大括号内是字符串，原样输出。如果是对象，会按照一般方式转为字符串。
+		    var obj = {"name":"张三"};
+		    console.log(`${obj}`);  //[Object Object] 这样是没有意义的。
+		    
+		    /*
+		     * 模板字符串可以跟在一个函数名后边，该函数将被调用来处理模板字符串，这叫做标签模板。
+		     * 实际上是函数调用的一种特殊形式，如果模板字符串有变量，会将模板字符串先处理成多个参数。
+		     * 
+		     */
+		    function tag(s,v1,v2){
+		    	//第一个参数s，代表模板字符串中的字符串数组，有一个raw属性，会把\n之类的字符转义
+		    	console.log(s.raw);
+		    	console.log(s[0]);
+		    	console.log(s[1]);
+		    	console.log(s[2]);
+		    	
+		    	console.log(v1);
+		    	console.log(v2);
+		    	return "OK";
+		    }
+		    var x = 5,y=10;
+		    tag `hello ${x+y} \n world ${x*y}`;
+		    
+		    /*
+		     * 还可以用标签模板在js中嵌入其他语言。
+		     * 类似下边这样，但是要实现其他语言转换的函数
+		     
+		    py `
+		     def fun(){
+		     	print("hello");
+		     	fun();
+		     }
+		    `
+		    */
+		   
+		   /*
+		    * es6还为原生的String对象提供了一个raw方法。用来充当模板字符串的处理函数。
+		    * 返回一个斜杠都被转义的字符串，对应于替换变量后的模板字符串。
+		    */
+		   console.log(String.raw `Hi \n${2+3}`);  //Hi \n5
+		   /*
+		    * String.raw也可以作为普通方法使用，第一个参数是一个具有raw属性的对象，且raw属性的值是一个数组。
+		    */
+		   console.log(String.raw({raw:"test"},0,1));  //t0e1st
+		   
+		   /*
+		    * 正则的扩展
+		    * 在es5中，RegExp构造函数的参数有两种情况。
+		    * 1.参数是字符串，这时第二个参数表示正则表达式的修饰符。
+		    *    var regex = new RegExp("xyz","i");
+		    * 2.参数是一个正则表达式，会返回原有正则的拷贝，但不允许第二个参数，否则报错
+		    *     var regex = new RegExp(/xyz/i);
+		    * es6改变了这种行为，如果RegExp的构造函数的参数是一个正则对象，允许使用第二个参数，并且返回的正则会舍弃原来的修饰符，只使用指定的修饰符。
+		    */
+		   console.log(new RegExp(/abc/ig,"i")); //只使用指定的修饰符i。
+		   
+		   /*
+		    *字符串的正则方法：
+		    * 字符串对象有四个方法可以使用正则： match(),replace(),search(),split()
+		    * es6将这4个方法，在语言内部全部调用RegExp的实例方法，从而做到所有与正则相关的方法
+		    * 全都定义在 RegExp上。
+		    *  String.prototype.match 调用 RegExp.prototype[symbol.match]
+		    */
+		   
+		   /*
+		    * u修饰符
+		    * es6对正则添加了u修饰符，含义为Unicode模式。用来正确处理大于\uFFFF的unicode字符。
+		    */
+		   console.log(/^\uD83D/u.test("\uD83D\uDC2A"));  //把后边的当成了一个字符。
+		   console.log(/^\uD83D/.test("\uD83D\uDC2A"));   //当成了两个字符
+		   
+		   /*
+		    * 一旦加上u修饰符，就会改变下边的正则行为：
+		    *  1.点字符（除了换行符以外的字符）对于码点大的，必须加上u，点字符才能识别。
+		    *  2.Unicode字符表示法。es6新增了使用大括号表示Unicode字符，必须加u，才能正确识别。
+		    *  3.量词。使用u修饰符后，所有量词都会正确识别码点大于0xFFFF的Unicode字符。
+		    *  4.预定义模式。u修饰符也影响到预定义模式，能否正确识别码点大于0xFFFF的Unicode字符。
+		    *  5.i修饰符：有些Unicode字符编码不同，但很接近，比如 \u004B 与\u212A都是大写K。不加u修饰，无法识别非规范的K字符。
+		    */
+		   //利用上面第四条，可以写出一个正确返回字符串长度的函数
+		   function codePointLength(text){
+		   	var result = text.match(/[\s\S]/gu);
+		   	return result?result.length:0;
+		   }
+		   console.log(text.length);
+		   console.log(codePointLength(text));
+		   
+		   /*
+		    * y修饰符，粘连修饰符。es6新增，与g类似，也是全局匹配
+		    * 后一次匹配从上一次匹配成功的下一个位置开始，不同在于：
+		    * g只要从后边剩余的匹配到就可以
+		    * y修饰符确保匹配必须从剩余的第一个位置开始，这就是粘连的含义。
+		    */
+		   var m = 'aaa_aa_a';
+		   var r1 = /a+/g;
+		   var r2 = /a+/y;
+		   console.log(r1.exec(m)); //["aaa"]
+		   console.log(r2.exec(m)); //["aaa"]
+		   
+		   console.log(r1.exec(m));  //["aa"]
+		   console.log(r2.exec(m)); //null  原因是y修饰符要从开头匹配
+		   /*
+		    * lastIndex属性指定每次搜索的开始位置，g修饰符从这个位置开始向后搜索，直到发现匹配。
+		    * y修饰符同样遵守lastIndex属性，但要求必须在lastIndex指定的位置发现匹配。
+		    */
+		   
+		   /*
+		    * sticky属性，es6的正则对象多了sticky属性，表示是否设置了y修饰符。
+		    */
+		   var r = /hello\d/igy;
+		   console.log(r.sticky);  //true
+		   
+		   /*
+		    * flags属性
+		    * es6 为正则新增了flags属性，返回正则的修饰符
+		    */
+		   console.log(r.flags);
+		   
+		   /*
+		    * 字符串必须转义，才能作为正则模式。没有同意将这个列入es7。但这是一个需求
+		    */
+		   function escapeRegExp(str){
+		   	return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g,"\\$&");
+		   }
+		   var q = "hello.how are you?";
+		   console.log(new RegExp(escapeRegExp(q),"g"));
+		   //这个生成正则表达式很棒。
+		</script>	
+	</head>
+	<body>
+	</body>
+</html>

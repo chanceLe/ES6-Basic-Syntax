@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>[es6]-13-Iterator和for...of循环</title>
+		<script src="./js/browser.js"></script>
+		<script type="text/babel">
+			/*
+			 * Iterator遍历器的概念
+			 * 遍历器是一种接口，为各种不同的数据结构提供统一的访问机制。任何
+			 * 数据结构只要部署Iterator接口，就可以完成遍历操作。
+			 * 
+			 * Iterator的作用有三个:
+			 *  1.是为各种数据结构，提供一个统一的，简便的访问接口；
+			 *  2.使得数据结构的成员能够按某种次序排列。
+			 *  3.es6创造了新的遍历命令 for of 循环，Iterator接口主要供for...of消费。
+			 * 
+			 * 遍历的过程：
+			 *   1.创建一个指针对象，指向当前数据结构的起始位置。也就是说，遍历器对象本质上，就是一个指针对象。
+			 *   2.第一次调用指针对象的next方法，可以将指针指向数据结构的第一个成员。
+			 *   3.第二次调用指针对象的next方法，可以将指针指向数据结构的第二个成员。
+			 *   4.不断调用指针对象的next方法，直到它指向数据结构的结束位置。
+			 * 
+			 * 每一次调用next方法，都会返回数据结构的当前成员信息。具体来说，就是返回一个包含value和done两个属性的对象。
+			 * 其中，value属性是当前成员的值，done属性是一个布尔值，表示遍历是否结束。
+			 * 
+			 * 下面是一个模拟next方法返回值的例子：
+			 */
+			
+			
+			var makeIterator = (array)=>{
+				var nextIndex = 0;
+				return {
+					next:function(){
+							return nextIndex < array.length?
+							{value:array[nextIndex++],done:false}:
+							{value:undefined,done:true }
+						
+					}
+				}
+			};
+			var it = makeIterator(["a","b"]);
+			console.log(it.next());
+			console.log(it.next());
+			console.log(it.next());
+			
+			/*
+			 * Object {value: "a", done: false}
+			   Object {value: "b", done: false}
+			   Object {value: undefined, done: true}
+			 */
+			
+			/*
+			 * es6中，有些数据结构原生具备Iterator接口,比如数组，不用任何处理就可以被for...of循环，有些就不行
+			 * 比如对象，原因在于这些数据结构原生部署了Symbol.iterator属性。另外一些数据结构没有。凡是部署了
+			 * Symbol.iterator属性的数据结构，就叫部署了遍历器接口，调用这个接口，就会返回一个遍历器对象。
+			 */
+			
+			/*
+			 * 数据结构的默认iterator接口
+			 * ES6规定，默认的iterator接口部署在数据结构的Symbol.iterator属性，Symbol.iterator本身是一个表达式，返回Symbol对象的
+			 * iterator属性，这是一个预定义好的，类型为Symbol的特殊值，所以放在方括号内。
+			 * 
+			 * ES6 中，有三类数据原生具备iterator接口：数组，某些类似数组的对象，Set和Map结构。
+			 * 
+			 * 对象之所以没有默认部署iterator接口，是因为对象的哪个属性先遍历，哪个属性后遍历是不确定的，需要开发者手动指定。
+			 * 本质上，遍历器是一种线性处理，对于任何非线性的数据结构，部署遍历器接口，就等于部署一种线性转换。	不过严格的说，对象
+			 * 部署遍历器接口并不是很必要，因为这时对象实际是被当做Map来使用，ES5没有Map结构，ES6原生提供了。
+			 * 
+			 * 一个对象要有可被for...of循环调用的iterator接口，就必须在Symbol.iterator的属性上部署遍历器生成方法（原型链上的对象具有该方法也可）。
+			 * 
+			 * 调用iterator接口的场合：
+			 * 1.解构赋值2.扩展运算符。3.yield* 后面跟的是一个可遍历结构，会调用该结构的遍历器接口。4.其他场合。
+			 */
+			
+			/*
+			 * 字符串的iterator接口
+			 * 字符串是一个类似数组的对象，也原生具有iterator接口。
+			 * 可以通过重写Symbol.iterator属性，达到修改遍历器行为的目的。
+			 */
+			
+			/*
+			 * 遍历器对象的return() throw()
+			 * 遍历器对象除了具有next方法，还可以具有return和throw方法。如果自己写遍历器对象生成函数，next方法是必须部署的，return方法和throw方法可选。
+			 * return 方法的使用场合是，如果for...of循环提前退出（通常是因为出错或者有break语句或continue语句），就会调用return方法。
+			 * 如果一个对象在完成遍历前，需要清理或释放资源，就可以部署return方法。
+			 */
+			function readLinesSync(file){
+				return {
+					next(){
+						if(file.isAtEndOfFile()){
+							file.close();
+							return {done:true};
+						}
+					},
+					return(){
+						file.close();
+						return {done:true};
+					}
+				}
+			}
+			/*
+			 * 上面代码中，函数readLinesSync接受一个文件对象作为参数，返回一个遍历器对象，其中除了next方法，还部署了return方法。
+			 * 下面我们让文件的遍历提前返回，这样就会触发执行return的方法。
+			 */
+			for(let line of readLinesSync(filename)){
+				console.log(line);
+				break;
+			}
+			//注意return方法必须返回一个对象，这是Generator规格决定的。
+			
+			/*
+			 * throw方法主要是配合Generator函数使用，一般的遍历器对象用不到这个方法。
+			 */
+			
+			/*
+			 * for...of循环 ， 只要有遍历器接口，就可以被for...of循环。
+			 * 使用范围包括 ：  数组,Set和Map结构,某些类似数组的对象（比如arguments，DOMList对象）  Generator  以及字符串。
+			 * 
+			 * 与其他遍历语法的比较：
+			 * 最原始的是for循环，这种写法比较麻烦，因此数组提供内置的forEach方法。
+			 * 
+			 * forEach的问题在于，无法中途跳出循环，break或return 都没作用。
+			 * 
+			 * for...in  遍历数组的键名，有几个缺点：
+			 *    数组的键名是数字，但是for...in是以字符串作为键名。
+			 *    不仅遍历数字键名，还会遍历手动添加的其他键，甚至包括原型链上的键。
+			 *    某些情况下，for...in循环会以任意顺序遍历键名。
+			 * 
+			 * 总之，for...in循环主要是为遍历对象设计的，不适合数组。
+			 * 
+			 * for...of循环相比上面几种做法，有显著优点：
+			 *   1.有着for...in一样简洁的语法，没有for...in的缺点。
+			 *   2.可以与break，return 结合使用。
+			 *   3.提供了遍历所有数据结构的统一操作接口。
+			 * 
+			 */
+			
+			
+		</script>
+	</head>
+	<body>
+	</body>
+</html>

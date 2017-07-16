@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>[es6]-07-函数扩展</title>
+		<script src="./js/browser.js" type="text/javascript" charset="utf-8"></script>
+		<script type="text/babel">
+		//函数扩展	
+			/*
+			 * 在es6之前，不能为函数的参数指定默认值，只能采用变通的方法。如下：
+			 */
+			function show(x){
+				var x = x || "hello";
+				console.log(x);
+			}
+			show("nihao");
+			show();
+			// 上面的缺点在于，如果参数x赋值了，但是对应的布尔值为false，则该赋值不起作用：
+			show('');  //hello   传了参数空字符，结果还是给到默认值
+			//为了避免这个问题，通常要先判断一下参数是否被赋值，如果没有，再等于默认值。
+			function show2(x){
+				if(typeof x ==="undefined"){
+					x = "world";
+				}
+				console.log(x);
+			}
+			show2('');
+			
+			/*
+			 * es6允许为参数设置默认值。
+			 */
+			function show3(x="hello"){
+				console.log(x);
+			}
+			show3("show3");
+			
+		    //可以看到es6的写法比之前十分简洁，而且自然，下面还有个例子:
+		    function Point(x=0,y=0){
+		    	this.x = x;
+		    	this.y = y;
+		    }
+		    var p = new Point();
+		    console.log(p);
+		    /*
+		     * 除了简洁，es6的写法好处：
+		     * 1.阅读者可以很快意识到，哪些参数是可以省略的，不用查看函数体或文档。
+		     * 2.有利于将来的代码优化，即使未来版本的对外接口中彻底拿掉这个参数，也不会导致以前的代码无法运行。
+		     * 参数变量是默认声明的，所以不能用let 或const再次声明，否则报错。
+		     * 
+		     * 参数默认值可与结构默认值结合使用。不详述。
+		     * 默认值必须放在尾部，不然没办法省略。也不利于阅读。
+		     */
+		    function show4(x=5,y=6){
+		    	console.log(x,y);
+		    }
+		    show4(undefined,null);  //5 null 
+		    //上面代码，undefined会触发默认值，null不会触发。
+		    
+		    /*
+		     * 函数的length属性
+		     * 指定了参数默认值以后，length将返回没有指定默认值的参数个数。
+		     * 指定了默认值后，length属性将失真，（我觉得这是相对说的，因为这时候length表示的必传参数。）
+		     * length属性的含义是，该函数预期传入的参数个数。某个参数指定默认值后，预期传入的
+		     * 就不包含这个了，说白了就是必传参数。
+		     * 同理，rest参数也不计入length属性
+		     */
+		    console.log((function(a){}).length);  //1
+		    console.log((function(a=5){}).length);  //0
+		    console.log((function(...args){}).length);  //0
+		    
+		    /*
+		     * 参数默认值是一个变量，这个变量的作用域也先是当前函数的作用域，然后才是全局作用域。
+		     */
+		    var x =1;
+		    function show5(x,y=x){
+		    	console.log(y);
+		    }
+		    show5(2);   //2
+		    //上面代码，调用时，由于函数内的变量x已经生成，所以y等于参数x，而不是全局变量x。
+		    //如果调用时，函数作用域内部的变量x没有生成，结果就会不一样。
+		    console.log(x,"x")
+		    function show6(y=x){
+		    	let x = 2;
+		    	console.log(y);
+		    }
+		    show6(); //1
+		    //函数调用时，y的默认变量x尚未在函数内部生成，所以x指向全局变量。如果全局的不存在，会报错。
+		    
+		    /*
+		     * 函数的参数默认值是一个函数，该函数的作用域是其声明时所在的作用域。
+		     */
+		    let foo = "outer";
+		    function show7(func = x => foo){
+		    	let foo = "inner";
+		    	console.log(func());
+		    }
+		    show7();  //“outer”
+		    //上面代码，func参数的默认值是一个匿名函数，返回值是变量foo。
+		    //这个匿名函数声明时，show7函数的作用域还没有形成，所以匿名函数里的foo指向外层作用域的foo，输出outer。
+		    //如果外部没有声明变量foo，就会报错。
+		    //下面有哥复杂的例子
+		    var x =1;
+		    function show8(x,y=function(){x=2;}){
+		    	var x =3;
+		    	y();
+		    	console.log(x,"in");
+		    }
+		    console.log(x,"out");
+		    show8();    //2
+		     /*
+		     * 函数show8调用时，参数x的值是undefined，所以y函数内部的x一开始是undefined，
+		     * 随着函数调用，函数没有传参，所以修改的是作用域链中的x，就是show8内的x。
+		     * 
+		     */
+		     function show9(x,y=function(x){x=2;}){
+		    	var x =3;
+		    	y();
+		    	console.log(x,"in");
+		    }
+		    console.log(x,"out");
+		    show9();    //3
+		    /*
+		     * 函数show9调用时，参数x的值是undefined，所以y函数内部的x一开始是undefined，
+		     * 随着函数调用，x被赋值为2，但是之前定义的 var x=3跟匿名函数中的x不影响，所以是3. 
+		     */  
+		    
+		    //利用参数默认值，可以指定某一个参数不能省略，省略则报错。
+		    function throwIfMissing(){
+		    	throw new Error("Missing parameter!")
+		    }
+		    function show11(mustBeprovided = throwIfMissing()){
+		    	return mustBeprovided;
+		    }
+//		    show11();  //报错
+			/*
+			 * 上面代码，参数mustBeprovided的默认值等于throwIfMissing的运行结果，这表明
+			 * 参数的默认值不是在定义时执行，而是在运行时执行，（即如果参数已经赋值，默认值中的函数就不会运行）
+			 * 这点跟python不一样。
+			 * 另外，可以将参数默认值设为undefined，表明这个参数是可省略的。
+			 */
+			/*
+			 * rest参数
+			 * es6引入rest参数（...变量名），用于获取函数的多余参数，这样就不需要使用arguments对象了，
+			 * rest参数搭配的变量是一个数组，该变量将多余的参数，放入数组中。
+			 */
+			
+			function add(...values){
+				let sum = 0;
+				for(var val of values){
+					sum += val;
+				}
+				return sum;
+			}
+			console.log(add(2,5,3));  //10
+			//下面是一个rest参数代替arguments变量的例子。
+			//arguments 写法
+			function sortNumbers(){
+				return Array.prototype.slice.call(arguments).sort();
+			}
+			//rest写法
+			const sortNumbers2 = (...numbers) => numbers.sort();
+			//可以发现rest参数的写法更自然更简洁。
+			//rest参数中的变量代表一个数组，数组特有的方法都可以用于这个变量，下面是利用rest参数改写数组push方法：
+			function push(arr,...items){
+				items.forEach(function(item){
+					arr.push(item);
+					console.log(item);
+				})
+			}
+			var a = [];
+			push(a,1,2,3,4,5);
+			console.log(a);
+			//rest参数之后不能再有其他参数，否则报错。函数的length属性，不包括rest参数。
+			
+			/*
+			 * 扩展运算符...
+			 * 好比rest的逆运算，将一个数组转为用逗号分隔的参数序列。
+			 * 这个运算符主要用于函数的调用。
+			 */
+			console.log(...[1,2,3]); // 1 2 3
+			function push2(arr,...args){
+				arr.push(...args);  //展开之后，相当于迭代了。这个push是数组的push。
+				console.log(arr);
+			}
+			var a = [];
+			push2(a,6,7,8,9);  //[6,7,8,9]
+			//再来个例子
+			function add(x,y){
+				return x+y;
+			}
+			console.log(add(...[4,5])); //9
+			//扩展运算符，与正常的参数可以结合使用，非常灵活，不再举例。
+			
+			//扩展运算符可以展开数组，所以不再需要apply方法，将数组转为函数的参数了。
+			//es5的写法
+		 	function f(x,y,z){
+		 		console.log(x,y,z);
+		 	}
+		 	f.apply(null,[0,1,2])
+		 	//es6的写法
+		 	f(...[1,2,3])
+		 	
+		 	//下面是扩展运算符取代apply方法的一个实际的例子，应用Math.max方法，简化求一个数组的最大元素。
+		 	//es5的写法
+		 	console.log(Math.max.apply(null,[14,3,77]));
+		 	//es6的写法
+		 	console.log(Math.max(...[14,3,77]));
+		 	//等同于
+		 	console.log(Math.max(14,3,77));
+		 	/*
+		 	 * 上面代码表示，由于js不提供求数组最大元素的函数，所以只能套用Math.max函数，将一个数组转化为一个序列，
+		 	 * 然后求最大值。有了扩展运算符，就可以直接用Math.max了。
+		 	 * 
+		 	 * 另一个例子，是通过push函数，将一个数组添加到另一个数组的尾部。
+		 	 */
+		 	//es5的写法
+		 	var arr1 = [0,1,2],arr2=[3,4,5];
+		 	Array.prototype.push.apply(arr1,arr2);
+		 	console.log(arr1,"arr1");
+		 	//es6的写法
+		 	var arr1 = [0,1,2],arr2=[3,4,5];
+		 	arr1.push(...arr2);
+		 	console.log(arr1,"arr1");
+		 	//上面，es5的写法中push方法的参数不能是数组，所以通过apply方法变通使用push方法。
+		 	//有了扩展运算符，就可以直接将数组传入push方法。
+		 	//下面是另外的例子：
+		 	//es5:
+		 	console.log(new (Date.bind.apply(Date,[2015,1,1])));
+		 	//es6
+		 	console.log(new Date(...[2015,1,1]));
+		 	
+		 	//扩展运算符的应用
+		 	//1.合并数组
+		 	//es5
+		 	console.log([1,2].concat([3,4,5]));
+		 	//es6
+		 	console.log([1,2,...[3,4,5]]);
+		 	//2.与解构赋值相结合，用于生成数组。
+		 	const [first,...rest] = [1,2,3,4];
+		 	console.log(first,rest);
+		 	//如果将扩展运算符用于数组赋值，只能放在参数的最后一位，否则会报错。
+//		 	const [...re,fir] = [1,2,3,4]; //报错
+		 	/*
+		 	 * 3.函数的返回值
+		 	 * js的函数只能返回一个值,如果要返回多个就用数组或对象,扩展运算符提供了一个变通:
+		 	 */
+		 	//4.可以将字符串转为真正的数组
+		 	console.log([..."hello"]);
+		 	//5.实现了Iterator接口的对象，都可以用扩展运算符，转为真正的数组
+		 	//6.Map和Set结构,Generator函数
+		 	 //扩展运算符内部调用的是数据结构的Iterator接口
+		 	 let map5 = new Map([
+		 	 	[1,"one"],
+		 	 	[2,"two"],
+		 	 	[3,"three"],
+		 	 ])
+		 	 console.log([...map5.keys()]);
+		 	 
+		 	 /*
+		 	  * 函数的name属性，返回函数的名字
+		 	  * 浏览器早就支持，es6写入标准
+		 	  * 匿名函数，es5会返回空  es6返回变量名字
+		 	  */
+		 	 const bar = function(){}
+		 	 console.log(bar.name);   //当前es6环境
+		 	 //Function构造函数返回的函数实例，name属性的值为anonymous
+		 	 console.log((new Function).name);   //anonymous
+		 	 
+		 	 //bind返回的函数，name属性值会加上“bound”前缀
+		 	 function foo(){};
+//		 	 console.log(foo.bind({}).name);  //"bound foo"   报错了
+
+			/*
+			 * 箭头函数
+			 * es6允许=>定义函数。var f = v => v;
+			 * 如果箭头函数不需要加参数，或多个参数就用一个圆括号代表参数部分。
+			 * 如果箭头函数的代码块部分多于一条语句，就要用大括号将它们括起来，并且使用return 语句返回,也可以不返回。
+			 */
+			var f = (v) =>{console.log(v);}
+			f(5);
+			//由于大括号被解释成代码块，如果要返回一个对象，必须在对象外面加上圆括号。
+			var f = (v) => {console.log(v);return ({v:"name"})}
+			console.log(f("id"));
+			
+			//箭头函数可以与变量解构结合使用
+			var f = ([a,b]) =>{console.log(a+b)};
+			f([1,2]);
+			
+			//箭头函数的一个用处是简化回调函数。
+			[1,2,3].map(x=>x+1);
+			
+			//另一个例子
+			console.log([2,8,6,1,7,5,9].sort((a,b)=>a-b));
+			//下面是rest参数与箭头函数结合的例子
+			
+			const numbers = (...nums) =>nums;
+			console.log(numbers(...[1,2,3,4,5]));
+			
+			const headAndTail = (head,...tail) =>[head,tail];
+			console.log(headAndTail(1,2,3,4,5));
+			
+			/*
+			 * 注意：
+			 * 1.函数体内的this对象，就是定义时所在的对象，而不是使用时所在的对象。
+			 * 2.不可以当做构造函数，也就是说，不可以使用new命令，否则报错。
+			 * 3.不可以使用arguments对象，该对象在函数体内不存在，可以用rest参数代替。
+			 * 4.不可以使用yield命令，所以箭头函数不能用作Generator函数。
+			 * 第一点尤其值得注意，this对象的指向是可变的，但在箭头函数中，它是固定的。
+			 */
+			function foo4(){
+				setTimeout(()=>{
+					console.log("id",this.id);
+				},100)
+			}
+			var id = 21;
+			foo4.call({id:42});  //id：42
+			
+			
+			//箭头可以让this指向固定化，这种特性有利于封装回调函数。
+			var handler = {
+				id:"123456",
+				init:function(){
+					document.addEventListener("click",event=>this.doSomething(event.type),false)
+				},
+				doSomething:function(type){
+					console.log("handling "+ type + "for" + this.id);
+				}
+			}
+			//箭头函数里没有自己的this，而是引用外层的this。
+			//下面的 代码有几个this？
+			function func(){
+				return () => {
+					return ()=>{
+						return ()=>{
+							console.log("id",this.id);
+						}
+					}
+				}
+			}
+			var f = func.call({id:1});
+			var t1 = f.call({id:2})()();   //1
+			var t2 = f().call({id:3})();   //1
+			var t3 = f()().call({id:4});   //1
+			//上面的代码只有一个this 就是函数func的this，其余的this其实都是最外层func函数的this。
+			//除了this，还有三个变量也是指向外层函数的对应变量：arguments，super，new.target		
+			function showArgs(){
+				setTimeout(()=>{
+					console.log("args:",arguments);
+				},1000);
+			}
+			showArgs(1,2,3,5);
+			//另外由于箭头函数没有自己的this，所以当然也不能用call，apply，bind这些函数改变this的指向。
+			
+			/*
+			 * 嵌套的箭头函数
+			 * 下面一个es5的嵌套函数
+			 */
+			function insert(value){
+				return { into:function (array){
+					return {after:function(afterValue){
+						array.splice(array.indexOf(afterValue) + 1,0,value);
+						return array;
+					}}
+				}}
+			}
+			console.log(insert(2).into([1,3]).after(1),"嵌套函数");
+			//上面的这个函数可以用箭头函数重写
+			let insert2 = (value) =>({into:(array)=>({after:(afterValue)=>{
+				array.splice(array.indexOf(afterValue)+1,0,value);
+				return array;
+			}})})
+			console.log(insert2(2).into([1,3]).after(1),"嵌套es6函数");
+			
+			//下面是一个部署管道机制的例子，即前一个函数的输出是下一个函数的输入
+			const pipeline = (...funcs)=>
+				val => funcs.reduce((a,b)=> b(a),val);
+				
+			const plus1 = a => a+1;
+			const mult2 = a => a*2;
+			const addThenMult = pipeline(plus1,mult2);
+			console.log(addThenMult(5));  //12
+			
+			//箭头函数还有一个功能，可以很方便的改写λ演算。（不详述，可百度）
+			
+			
+			/*
+			 * 函数的绑定
+			 * 箭头函数绑定this，大大减少了显示绑定this的写法。但是箭头函数，并不适用所有场合，
+			 * 所以es7提出了函数绑定的运算符，用来取代apply，call，bind调用,babel已支持。
+			 * 函数绑定运算符（::），左边是一个对象，右边是一个函数。运算符会自动将左边的对象，作为上下文
+			 * 环境（即this对象），绑定到右边的函数上面。
+			 * foo::bar; 等价于 bar.bind(foo);
+			 * foo::bar(...arguments)  等价于  bar.apply(foo,arguments)
+			 * 
+			 * 如果双冒号左边为空，右边是一个对象的方法，则等于将该方法绑定在该对象上面。
+			 * 
+			 * var method = obj::obj.foo;  等价于 var method = ::obj.foo;
+			 * 由于双冒号运算符返回的还是原对象，因此可以使用链式写法。
+			 */
+			
+			
+			/*
+			 * 尾调用优化
+			 * 尾调用是指某个函数的最后一部操作是调用哪个另一个函数。
+			 * function f(x){
+			 * 	return g(x);
+			 * }
+			 * 上面代码中，函数f的最后一步是调用函数g，这就叫尾调用。
+			 *  一下三种情况，都不属于尾调用：
+			 * function f(x){
+			 * 	let y = g(x);  //在这里调用的
+			 * 	return y;
+			 * }
+			 * 
+			 * function f(x){
+			 * 	return 	 g(x) + 1;  //最后一步是计算+1
+			 * }
+			 * 
+			 * function f(x){
+			 * 	g(x);       //最后一步实际上是return undefined
+			 * }
+			 * 尾调用不一定出现在尾部，只要是最后一步操作即可。
+			 * 
+			 *  function f(x){
+			 * 	if(x>0){
+			 * 		return m();
+			 * 	}
+			 * 	return n(x);
+			 * }
+			 * 上面代码中，函数m和n都属于尾调用，因为他们都是函数的最后一步操作。
+			 * 
+			 * 优化：
+			 * 函数调用会在内存形成一个"调用记录"，又称调用帧，保存调用位置和内部变量等信息。
+			 * 如果函数A的内部调用B,那么子A调用帧的上方会形成调用B调用帧。等到B运行结束，将结果返回
+			 * 到A，	B的调用帧才消失。所有的调用帧形成一个调用栈。
+			 * 
+			 * 尾调用由于是最后一步操作，所以不需要保留外层函数的调用帧，因为调用位置，内部变量等信息
+			 * 都不会再用到了，只要直接用内层函数的调用帧，取代外层函数的调用帧就可以了。
+			 * 
+			 * function f(){
+			 * 	let m = 1;
+			 *  let n = 2;
+			 *  return g(m+n); 
+			 * }
+			 * f();
+			 * //等同于
+			 * function f(){
+			 * 	return g(3)
+			 * }
+			 * f()
+			 * //等同于
+			 * g(3);
+			 * 
+			 * 上面代码中，如果g不是尾调用，函数f就需要保存内部变量mn的值，g的调用位置等信息。
+			 * 但由于调用g之后，函数f就结束了，所以执行到最后一步完全可以删除f的调用帧，只保留g的
+			 * 调用帧。
+			 * 
+			 * 尾调用优化就是只保留内层函数的调用帧。如果所有函数都是尾调用，那么完全可以做到每次执行时，
+			 * 调用帧只有一项，这将大大节省内存。
+			 * 
+			 * 注意：只有不再用到外层函数的内部变量，内层函数的调用帧才会取代外层函数的调用帧，否则就无法
+			 * 进行“尾调用优化”
+			 * 
+			 * 函数调用自身，称为递归。如果尾调用自身，就称为尾递归。
+			 * 递归非常耗费内存，因为要同时保存成千上百个调用帧，很容易发生栈溢出错误。但对于尾递归来说，
+			 * 由于只存在一个调用帧，所以永远不会发生栈溢出错误。
+			 */
+			
+			/*
+			 * 	严格模式
+			 * ES6的尾调用优化，仅在严格模式下开启，正常模式下是无效的。这是因为在正常模式下，
+			 *  函数内部有两个变量，可以跟踪函数的调用栈。
+			 * func.arguments:返回调用时函数的参数。
+			 * func.caller:返回调用当前函数的那个函数。
+			 * 尾调用优化发生时，函数的调用栈会改写，因此上面两个变量就会失真。严格模式禁用这两个变量
+			 * 所以，尾调用模式只在严格模式下生效。
+			 */
+			 
+			 /*
+			  * 尾递归优化的实现
+			  * 尾递归优化只在严格模式下生效。那在普通模式下，也是可以优化的，就是把递归变成循环，
+			  * 下面是一个正常的递归函数：
+			  */
+			 function sum(x,y){
+			 	if(y>0){
+			 		return sum(x+1,y-1);
+			 	}else{
+			 		return x;
+			 	}
+			 }
+			console.log(sum(1,1100000));
+			//蹦床函数可以将递归转为循环执行
+			function trampoline(f){
+				while (f & f instanceof Function){
+					f = f();
+				}
+				return f;
+			}
+			/*
+			 * 上面是蹦床函数的一个实现，接收一个函数f作为参数，只要f执行后
+			 * 返回一个函数，就继续执行。注意，这里是返回一个函数，然后执行该函数，
+			 * 而不是函数里面调用函数，这样就避免了递归执行。
+			 * 然后要把原来的递归函数，改写为每一步返回另一个函数。
+			 */
+			function sum2(x,y){
+				if(y>0){
+					return sum.bind(null,x+1,y-1);
+				}else{
+					return x;
+				}
+			}
+			//上面代码中，sum函数的每次执行，都会返回自身的另一个版本。
+			//现在使用蹦床函数执行sum2，就不会发生调用栈溢出。
+			console.log(trampoline(sum(1,10000000)));
+			
+			//蹦床函数并不是真正的尾递归优化，下面的实现才是。
+			function tco(f){
+				var  value;
+				var  active = false;
+				var  accumulated = [];
+				return function accumulator(){
+					accumulated.push(arguments);
+					if(!active){
+						active = true;
+						while (accumulated.length){
+							value = f.apply(this,accumulated.shift());
+						}
+						active = false;
+						return value;
+					}
+				}
+			}
+			var sum3 = tco(function(x,y){
+				if(y>0){
+					return sum(x+1,y-1);
+				}else{
+					return x;
+				}
+			})
+			console.log(sum(1,1000001454),"sum3");
+			/*
+			 * 上面代码中，tco函数是尾递归优化的实现，它的奥妙在于状态变量active，默认情况下，这个变量是
+			 * 不激活的。一旦进入尾递归优化的过程，这个变量就激活了。然后每一轮递归sum返回的都是undefined，
+			 * 所以就避免了递归执行，而accumulated数组存放每一轮sum执行的参数，总是有值的，这就保证了accumulator
+			 * 函数内部的while循环总是会执行，这样巧妙的把递归变成了循环。而后一轮的参数会取代前一轮的参数，
+			 * 保证了调用栈只有一层。
+			 */
+			
+			/*
+			 * 函数参数的尾逗号
+			 * ES7有一个提案，允许函数的最后一个参数有尾逗号。
+			 * 目，函数定义和调用时，都不允许有参数的尾逗号。
+			 */
+			function clownsEverywhere(param1,param2){}
+			clownsEverywhere("foo","boo")
+			/*
+			 * 如果以后要在函数的定义之中添加参数，就势必还要添加一个逗号。这对版本管理系统来说，就会显示，
+			 * 添加逗号的那一行也发生了变化。看上去有点冗余，因此新提案允许定义和调用时，尾部直接有一个逗号。
+			 */
+		</script>
+	</head>
+	<body>
+	</body>
+</html>

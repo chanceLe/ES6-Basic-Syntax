@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>[es6]-03-数组</title>
+		<script src="./js/browser.js"></script>
+		<script type="text/babel">
+			/*
+			 * 数组解构赋值：
+			 * ES6允许按照一定模式，从数组和对象中提取值，对变量进行赋值，这种被称为解构。
+			 * 示例如下：
+			 */
+			var [a,b,c] = [1,2,3];
+			console.log(a); //可以直接使用。
+			//本质上，这种写法属于模式匹配，只要等号两边的模式相同，左边的变量就会被赋予对应的值。
+			//如果解构不成功，变量的值就等于undefined
+			var [foo] = [];
+			console.log(foo);
+			var [bar,hoo] = [1];
+			console.log(hoo);
+		   	//上边这两种都属于解构不成功
+		   	//下面情况属于不完全解构，但是会成功
+		   	var [m,n] = [1,2,3];
+		   	console.log([m,n]);
+		   	
+		   	//如果等号右边不是可以遍历的结构，那么将会报错：
+//		   	let [foo]=1;类似这种，因为转成对象后找不到Iterator接口。{}本身不具备Iterator接口。
+			//对于Set结构，也可以使用数组的解构赋值：
+		    let [x,y,z] = new Set(["a","b","c"]);
+		    console.log(x);
+		    
+		    //解构赋值允许有默认值
+		    var [foo = true] = [];
+		    console.log(foo);
+		    //ES6内部使用严格相等运算符(===), 判断一个位置是否有值。
+		    //所以如果一个数组成员不严格等于undefined，默认值是不会生效的。
+//		    var [foo = 1] = [k];
+		    console.log(foo);   //默认值不生效，报错k没有定义
+		    var [l = 1] = [undefined];  
+		    console.log(l);     //严格等于undefined的时候，默认值才生效。
+		    //如果默认值是一个表达式，那么这个表达式是惰性求值的，即只有在生效用到的时候才会求值。
+		    //默认值也可以引用结构赋值的其他变量，但该变量必须已经声明：
+		    let [p = 1,q=p] = [2];
+		    console.log([p,q]);
+		    
+		    //数组的扩展
+		    /*
+		     * Array.from()将两类对象转换为真正的数组：类似数组的对象和可遍历的对象
+		     * 包括es6新增数据类型Set和Map。
+		     * 下面是一个类似数组的对象，Array.from()将它转为真正的数组：
+		     */
+		    let arrLike = {
+		    	"0":"a",
+		    	"1":"b",
+		    	"2":"c",
+		    	length:3
+		    }
+		    //es5的写法：
+		    var arr1 = [].slice.call(arrLike);
+		    console.log(arr1);
+		    //es6 的写法
+		    var arr2 = Array.from(arrLike);
+		    console.log(arr2);
+		    //实际应用中，常见的类似数组的对象是DOM操作返回的NodeList集合，以及函数内部arguments对象。
+		    //Array.from都可以将它们转换为数组。
+		    //nodelist对象
+		    let ps = document.querySelectorAll("p");
+		    Array.from(ps).forEach(function(p){
+		    	console.log(p);
+		    })
+		    //arguments对象
+		    function test(a,...rest){
+		    	var args = Array.from(arguments);
+		    	console.log(args);
+		    }
+		    test(1,2,3,4,5,6);
+		    //只要是部署了Iterator接口的数据，Array.from都可以将它转换为数组。
+		    console.log(Array.from("hello"));
+		    let nameSet = new Set(["a","b"]);
+		    console.log(Array.from(nameSet));
+		    //如果参数是一个真正的数组，Array.from会返回一个一模一样的新数组。
+		    //值得注意的是 扩展运算符(...)也可以将某些数据结构转为数组。
+		    //arguments对象
+		    function test2(){
+		    	var args = [...arguments];
+		    	console.log(args);
+		    }
+		    test2(2,4,5,6);
+		    //nodelist对象
+		    console.log([...document.querySelectorAll("p")]);
+		    
+		    //任何有length属性的对象，都可以被Array.from转成数组，但扩展运算符在这时候不能转：
+		    console.log(Array.from({length:3}));
+		    console.log( [...{length:3}]);  //实际上也转换成功了。 ？？？
+		    
+		    /*
+		     * 对于没有部署的浏览器可以用Array.prototype.slice方法替代。
+		     */
+		    const toArray = (() =>
+		    	Array.from ? Array.from : obj=>[].slice.call(obj)
+		    )();
+		    
+		    //Array.from还可以接受第二个参数，作用类似于数组的map方法，用来对每个元素进行处理，
+		    //将处理后的值放入返回的数组。
+		    Array.from(arrLike,x=>x*x);
+		    //等同于
+		     Array.from(arrLike).map(x=>x*x);
+		     
+		     console.log(Array.from([1,2,3],x=>x*x));
+		     
+		     //用途比较广，dom操作，到数组值得转换，到返回一组数据的数据类型。
+		     function typesOf(){
+		     	return Array.from(arguments,value=>typeof value)
+		     }
+		     console.log(typesOf("s",1,Number,[]))
+		     
+		     //如果map函数里用到了this关键字，还可以传入Array.from的第三个参数，用来绑定this。
+		     
+		     //只要有一个原始的数据结构，就可以对它的值进行处理，然后转成规范的数组，进而使用数组的方法。
+		     console.log(Array.from({length:2},()=>"jack"));
+		     //上面代码中，第一个参数，指定了第二个参数的运行次数，这种特性可以让该方法的方法变得非常灵活。
+		     
+		     //另一个应用是将字符串转为数组，然后返回字符串的长度，这样可以正确处理各种Unicode字符，可以
+		     //避免将大于\uFFFF的Unicode字符，算作两个字符的bug。
+		     
+		     function countSymbols(string){
+		     	return Array.from(string).length;
+		     }
+		     
+		     
+		     //Array.of()将一组值，转换为数组。
+		     console.log(Array.of(3,11,8));
+		     console.log(Array.of(3));
+		     console.log(Array.of(3,11,8).length);
+		     //这个方法的主要目标是弥补数组构造函数的不足。因为参数个数不同，会导致Array()的行为有差异。
+		     console.log(Array());  //[]
+		     console.log(Array(3));  //[,,]
+		     console.log(Array(3,8,4)); //[3,8,4]
+		     // 上面代码中，Array方法参数为0，1，3时候，返回结果都不一样，只有当参数个数不少于2个时，Array才会返回 
+		     //由参数组成的额数组，一个参数时，实际上是在指定数组长度。
+		     
+		     //Array.of() 基本上可以用来替代Array或new Array(), 并且不存在由于参数不同而导致的重载。行为非常统一。
+		     //Array.of()总是返回由参数值组成的数组。如果参数没有值，就返回一个空数组。
+		     //Array.of()可以用下面的代码模拟实现：
+		     function Arrayof(){
+		     	return [].slice.call(arguments);
+		     }
+		    
+		    
+		    /*
+		     * 数组实例的copyWithin
+		     * 在当前的数组内部，将指定位置的成员复制到其他位置（会覆盖原有成员），然后返当前数组，也就是说，使用这个方法，会修改当前数组。
+		     * Array.prototype.copyWithin(target,start=0,end=this.length);
+		     * 接收三个参数：
+		     *    target：从该位置开始替换数据；
+		     *    start：从该位置开始读取数据，默认为0，如果为负值，表示倒数。
+		     *    end:到该位置停止读取数据，默认等于数组长度。如果是负值，表示倒数。
+		     * 这三个都应该是数值，如果不是，自动转换。
+		     */
+		    console.log([1,2,3,4,5].copyWithin(0,3));
+		    //将3号位复制到0号位
+		    console.log([].copyWithin.call({length:5,3:1},0,3));
+		    
+		    //不再举例
+		    
+		    /*
+		     * 数组实例的find()和findIndex()
+		     * find()方法用于找出第一个符合条件的数组成员。它的参数是一个回调函数，
+		     * 所有数组成员依次执行该回调函数，直到找出第一个返回值为true的成员，然后返回该成员。
+		     * 如果没有符合条件的成员，返回undefined。
+		     */
+		    console.log([1,2,-5,7].find(x=>x<0));  //-5
+		    console.log([1,5,10,15].find(function(value,index,arr){
+		    	return value > 9;
+		    }))  //10
+		    //上面代码中，find的回调函数有三个参数，值，索引，原数组。
+		    
+		    //findIndex方法的用法与find方法非常类似，返回一个符合条件的数组成员的索引，都不符合就返回-1。
+		     console.log([1,5,10,15].findIndex(function(value,index,arr){
+		    	return value > 9;
+		    }))  //2 索引
+		    //这两个方法都可以接受第二个参数，用来绑定回调函数的this对象。
+		     //另外这两个方法都可以发现NaN，弥补了数组IndexOf方法的不足。
+		     console.log([NaN].indexOf(NaN))  //-1
+		     console.log([NaN].findIndex(y=>Object.is(NaN,y)));  //0
+		     /*
+		      * 关于Object.is()  多数时候与"===" 等价，
+		      * 但对于NaN、0、+0、 -0，则和 “===” 不同。
+		      * 也就是用Object.is(NaN，NaN) //true
+		      * Object.is(0,-0) //false 
+		      * Object.is(+0,-0) //false
+		      */
+		     
+		     
+		     /*
+		      * 数组实例的fill()
+		      * 使用给定值，填充一个数组。相当于重写。
+		      * 接受第二和第三个参数，用于指定填充的起始位置和结束位置（不包括结束的位置）。
+		      */
+		     console.log([1,2,3].fill("a"));  //[a,a,a]
+		     console.log(new Array(3).fill(4));  //[4,4,4]
+		     console.log([1,2,3,4,5,6].fill("a",2,4))  //[1,2,a,a,5,6]
+		     
+		     
+		     /*
+		      * 数组实例的entries(),keys(),values()用于遍历数组。
+		      * 都返回一个Iterator对象，用for of循环，区别是
+		      * keys()是对键名的遍历，values()是对键值的遍历，entries是对键值对的遍历。
+		      */
+		     for(let index of ["a","b"].keys()){
+		     	console.log("index：",index);
+		     }
+		     for(let ele of [1,2,3]){
+				//values这个方法好像找不到了。应该换成了这样的写法
+		     	console.log("value：",ele);
+		     }
+		     for(let [index,ele] of ["a","b"].entries()){
+		     	console.log("key-val：",index,ele);
+		     }
+		     //下面这个倒是可以用的，但是是绑定在Object上的。
+		    var obj = {"a":"html","b":"javascript"};
+		    console.log(Object.values(obj));
+		//如果不使用for of循环，可以用手动的next进行遍历：
+		let letter = ["a","b","v"];
+		let entries = letter.entries();
+		console.log(entries.next().value);
+		console.log(entries.next().value);
+		console.log(entries.next().value);
+		console.log(entries.next().value); //超过了长度就是undefined
+		
+		/*
+		 * 数组实例的includes(),返回一个布尔值，表示某个数组是否包含给定的值，与字符串的
+		 * includes类似，属于es7，但babel已经支持。
+		*/
+		console.log([1,2,3].includes(2));  //true
+		console.log([1,2,3].includes(4));  //false
+		console.log([1,2,NaN].includes(NaN)); //true
+		//该方法的第二个参数表示搜索的起始位置，默认为0，如果第二个参数为负数，
+		//表示倒数，如果这是它大于数组的长度，则会重置为从0开始。
+		//没有这个方法之前，都是用数组的indexOf方法，检查是否包含某个值。
+		//indexOf的缺点：不够语义化，他要找到参数出现的第一个位置，所以要和-1比较，
+		//            内部使用===判断，对NaN误判。
+		console.log([NaN].includes(NaN));  //true
+		//下面的代码检查当前环境是否支持该方法，如果不支持，部署一个简易版本：
+		const contains = (()=>
+			Array.prototype.includes?(arr,value)=>arr.includes(value)
+			:(arr,value)=>arr.some(el=>el===value)
+		)();
+		console.log(contains(["foo","baz"],"baz"));
+		/*
+		 *另外，Map和Set数据结构有一个has方法，需要注意与includes区分。
+		 * Map的has方法，用来查找键名的。
+		 * Set的has方法，用来查找值的。
+		 */
+		
+		
+		/*
+		 * 数组的空位：
+		 * 空位不是undefined，一个位置的值等于undefined，依然是有值的。
+		 * 空位是米有任何值的。
+		 */
+		console.log( 0 in [undefined]);  //true
+		console.log( 0 in [,]);    //false
+		/*
+		 * 上面代码说明，第一个数组的0号位置是有值的，第二个数组的0号位是没有值的。
+		 * es5对空位的处理很不一致，大多数情况，跳过空位。
+		 * forEach(),filter(),every(),some()都会跳过空位。
+		 * map()会跳过空位，但会保留这个值
+		 * join()和toString()会将空位视为undefined，而undefined和null会被
+		 * 处理成空字符串。
+		 * 
+		 * es6明确将空位转为undefined。
+		 * Array.from会将数组的空位转为undefined，也就是不会忽略空位。
+		 */
+		console.log(Array.from(["a",,"b"])); //[a,undefined,b]
+		//扩展运算符也将空位转为undefined
+		console.log([...["a",,"b"]]);  //[1,undefined,2]
+		//上面代码实测的时候，结果是[a,2:b]; 并没有undefined。
+		
+		
+		
+		
+		</script>
+	</head>
+	<body>
+		<p></p>
+		<p></p>
+		<p></p>
+	</body>
+</html>

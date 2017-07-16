@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>[es6]-06-数值的扩展</title>
+		<script src="./js/browser.js"></script>
+		<script type="text/babel">
+			/*
+			 * 1.二进制和八进制表示法
+			 * es6提供新的表示法 二进制0b(或0B)  八进制0o(或0O)；
+			 */
+			console.log(0b111 ===7);
+			console.log(0o11 === 9);
+			/*
+			 * 从es5的严格模式开始，八进制就不允许使用前缀0表示，es6明确使用0o表示。
+			 */
+			//如果要将0b和0o前缀的字符串数值转换为十进制，要使用Number方法。
+			console.log(Number("0b111"))  //7
+			console.log(Number("0o11"));  //9
+			
+			/*
+			 * es6在Number对象上，新提供了Number.isFinite()检查一个数值是否有限
+			 * 和Number.isNaN()  判断 一个数值是不是NaN
+			 */
+			console.log(Number.isFinite(NaN));  //false
+			console.log(Number.isFinite(15));  //true
+			console.log(Number.isFinite(Infinity));  //false
+			console.log(Number.isFinite(-Infinity)); //false
+			
+			//es6将全局方法 parseInt和parseFloat,移植到Number对象上面，行为完全保持不变。
+			//es5的写法
+			console.log(parseInt("12.34"));
+			//es6的写法
+			console.log(Number.parseInt("12.34"));
+			//这样做的目的是减少全局性方法，使得语言逐步模块化。
+			
+			/*
+			 * Number.isInteger()判断一个值是否为整数。在js内部，整数和浮点数是同样的存储方法，所以3和3.0视为同一个值。
+			 */
+			console.log(Number.isInteger(25));
+			console.log(Number.isInteger(25.0));
+			console.log(Number.isInteger(25.1));
+			console.log(Number.isInteger(true));
+			
+			/*
+			 * es6在Number对象上新增一个极小的常量。
+			 * Number.EPSILON
+			 * 目的在于为浮点数计算设置一个误差范围。我们知道浮点数计算不精确，
+			 * 但如果误差小于Number.EPSILON，我们就可以认为得到了正确结果。
+			 * 实质是一个可以接受的误差范围。
+			 */
+			console.log(Number.EPSILON);
+			console.log(0.1+0.2-0.3);
+			//下面代码为浮点数运算，部署了一个误差检查函数
+			function withinErrorMargin(left,right){
+				return Math.abs(left-right) < Number.EPSILON;
+			}
+			withinErrorMargin(0.1+0.2,0.3);  //true ，可以接受
+			
+			/*
+			 * 安全整数和Number.isSafeInteger()
+			 * js能准确表示的整数范围在 -2^53到2^53之间（不含两个端点），超过这个范围，无法精确表示。
+			 */
+			console.log(Math.pow(2,53));
+			console.log(Math.pow(2,53)+1); 
+			//结果是一样的，可见超出2^53之后，数字就不精确了。
+			//es6引入了Number.MAX_SAFE_INTEGER 和Number.MIN_SAFE_INTEGER，表示整数范围的上下限。
+			console.log(Number.MAX_SAFE_INTEGER == Math.pow(2,53)-1);
+			console.log(Number.MAX_SAFE_INTEGER == -Number.MIN_SAFE_INTEGER);
+			//用Number.isSafeInterger判断一个整数是否落在安全范围内
+			console.log(Number.isSafeInteger(Number.MAX_SAFE_INTEGER));  //true
+			console.log(Number.isSafeInteger(1.2));  //false
+			
+			//实际使用这个函数时，要注意，验证结果的同时，要验证参与运算的每个数。
+			console.log(Math.pow(2,55)/Math.pow(2,54));
+			console.log(Number.isSafeInteger(Math.pow(2,55)/Math.pow(2,54)));
+			//乘除好像没什么问题，看下面
+			Number.isSafeInteger(9007199254740993-990); //true
+			console.log(9007199254740993-990);
+			//返回结果； 9007199254740002   正确结果  ：9007199254740003
+			//从之前的例子可以看到，9007199254740993代表的就是9007199254740992
+			
+			//下面的函数可验证两个运算数和运算结果:
+			function trusty(left,right,result){
+				if(
+					Number.isSafeInteger(left) &&
+					Number.isSafeInteger(right) &&
+					Number.isSafeInteger(result) 
+				){
+					return result;
+				}
+				throw new RangeError("Operation cannot be trusted!");
+			}
+//			trusty(9007199254740993,990,9007199254740993-990);  //报错
+     		console.log(trusty(1,2,3));
+     		
+     		/*
+     		 * Math对象的扩展：
+     		 * es6在Math对象上新增了17个与数学相关的方法，都是静态方法，只能在Math对象上调用。
+     		 */
+     		//Math.trunc()去除小数部分，返回整数部分。对于非数值，使用Number方法先转换为数值。
+     		//空值和无法截取整数的值，返回NaN。
+     		console.log(Math.trunc(4.1)) //4
+     		console.log(Math.trunc(-4.1)) //-4
+     		console.log(Math.trunc("12.65")) //12
+     		console.log(Math.trunc(NaN))  //NaN
+     		console.log(Math.trunc("foo"))  //NaN
+     		console.log(Math.trunc())   //NaN
+     		//对于没有部署这个方法的环境可以模拟:
+     		Math.trunc = Math.trunc || function(x){
+     			return x<0?Math.ceil(x):Math.floor(x);
+     		}
+     		
+     		//Math.sign()判断一个数到底是正数，负数还是0。
+     		//返回五种值。 参数是正数，返回+1.负数，返回-1；0返回0，-0返回-0，其他值返回NaN.
+     		console.log(Math.sign(-5));  //-1
+     		console.log(Math.sign(5));  //1
+     		console.log(Math.sign(0));  //0
+     		console.log(Math.sign(-0));   //-0
+     		console.log(Math.sign(NaN));  //NaN
+     		//没有的环境，可以模拟：
+     		Math.sign = Math.sign || function(x){
+     			x= +x;
+     			if(x===0 || isNaN(x)){
+     				return x;
+     			}
+     			return x>0?1:-1;
+     		}
+     		
+     		
+     		//Math.cbrt()计算一个数的立方根
+     		console.log(Math.cbrt(-1)); //-1
+     		console.log(Math.cbrt(1));   //1
+     		console.log(Math.cbrt(0));   //0
+     		console.log(Math.cbrt('8'));  //2
+     		console.log(Math.cbrt(NaN));  //NaN
+     		//没有的环境，可以模拟：
+     		Math.cbrt = Math.cbrt ||function(x){
+     			var y = Math.pow(Math.abs(x),1/3);
+     			return x<0? -y:y;
+     		}
+     		
+     		//Math.hypot() 返回所有参数的平方和的平方根
+     		console.log(Math.hypot(3,4))  //5
+     		console.log(Math.hypot())   //0
+     		console.log(Math.hypot(3,4,'foo'));  //NaN
+     		console.log(Math.hypot(-3))  //3
+     		//如果参数不是数值，会将其转化为数值。只要有一个参数无法转为数值，就会返回NaN.
+     		
+     		//对数方法，用的少，跳过。
+     		
+     		//es6新增了6个三角函数方法。
+     		Math.sinh(); Math.cosh();Math.tanh();
+     		Math.asinh();Math.acosh();Math.tanh();
+     		
+     		//指数运算  **（跟python一样的）,es7新增，目前babel转码器已经支持。
+     		console.log(2**3);
+     		//可以与等号结合，形成新的运算符  **=
+     		
+     </script>
+	</head>
+	<body>
+	</body>
+</html>
